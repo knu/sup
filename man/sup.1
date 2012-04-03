@@ -1,0 +1,52 @@
+.Dd April 3, 2012
+.Dt E 1
+.Os FreeBSD
+.Sh NAME
+.Nm sup
+.Nd do <whatever SCM> update
+.Sh SYNOPSIS
+.Nm
+.Op Ar path ...
+.Sh DESCRIPTION
+.Nm
+is a tool to just
+.Qq update
+a working directory using whatever SCM commands appropriate for the
+directory.  Updating is performed for each given path, or the current
+directory if none is given.
+.Pp
+.Nm
+currently supports CVS
+.Pq Sq Nm cvs ,
+Subversion
+.Pq Sq Nm svn ,
+Git
+.Pq So Nm git Sc Ns Pf / So Nm git-svn Sc ,
+Mercurial
+.Pq Sq Nm hg ,
+and Bazaar
+.Pq Sq Nm bzr .
+.Pp
+If called as
+.Sq Nm vcs ,
+the name of SCM detected is printed for each given path.
+.Sh BUGS
+.Bl -dash -compact
+.It
+The command name obviously collides with the legendary tool
+.Qq SUP
+.Pq Software Upgrade Protocol .
+.Pp
+.It
+.Nm
+calls
+.Sq rebase
+in updating a Git working directory instead of
+.Sq merge
+and there is no way to configure that.
+.Pp
+.It
+There is no command line option, no configuration and no nothing.
+.El
+.Sh AUTHOR
+.An Akinori MUSHA Aq knu@iDaemons.org

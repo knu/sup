@@ -1,4 +1,4 @@
-# sup - do <whatever SCM> update
+# sup - do &lt;whatever SCM&gt; update
 
 ## NAME
 

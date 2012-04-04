@@ -75,7 +75,12 @@ vcs_of () {
         while :; do
             if [ -d .git ]; then
                 if [ -d .git/svn ]; then
-                    echo git-svn
+                    if [ -n "$(ls .git/svn)" ]; then
+                        echo git-svn
+                    else
+                        rmdir .git/svn
+                        echo git
+                    fi
                 else
                     echo git
                 fi
@@ -167,7 +172,9 @@ do_sup () {
                             fi
                         fi
                     fi
-                    git svn rebase -l
+                    if [ "$vcs" = git-svn ]; then
+                        git svn rebase -l
+                    fi
                 } )
             ;;
         git-bare)

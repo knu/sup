@@ -75,11 +75,11 @@ vcs_of () {
         while :; do
             if [ -d .git ]; then
                 if [ -d .git/svn ]; then
-                    if [ -n "$(ls .git/svn)" ]; then
-                        echo git-svn
-                    else
-                        rmdir .git/svn
+                    if [ -z "$(find .git/svn -type f -print)" ]; then
+                        rm -rf .git/svn
                         echo git
+                    else
+                        echo git-svn
                     fi
                 else
                     echo git

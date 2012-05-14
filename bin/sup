@@ -175,6 +175,7 @@ do_sup () {
                     if [ "$vcs" = git-svn ]; then
                         git svn rebase -l
                     fi
+                    git submodule update --init --recursive
                 } )
             ;;
         git-bare)

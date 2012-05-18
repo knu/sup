@@ -58,11 +58,6 @@ vcs_of () {
 
         cd "$dir" || exit
 
-        if [ -d CVS ]; then
-            echo cvs
-            exit
-        fi
-
         if [ -f config -a -d objects -a -d refs ]; then
             case "$dir" in
                 ?*.git)
@@ -101,6 +96,12 @@ vcs_of () {
             fi
             cd -P ..
         done
+
+        if [ -d "$dir"/CVS ]; then
+            echo cvs
+            exit
+        fi
+
         exit 1
     )
 }

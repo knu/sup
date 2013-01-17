@@ -35,7 +35,7 @@ path.
 
 ## AUTHOR
 
-Copyright (c) 2008, 2009, 2012 Akinori MUSHA.
+Copyright (c) 2008, 2009, 2012, 2013 Akinori MUSHA.
 
 Licensed under the 2-clause BSD license.  See `LICENSE.txt` for
 details.

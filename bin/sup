@@ -67,6 +67,7 @@ vcs_of () {
             esac
         fi
 
+        (
         while :; do
             if [ -d .git ]; then
                 if [ -d .git/svn ]; then
@@ -96,6 +97,7 @@ vcs_of () {
             fi
             cd -P ..
         done
+        )
 
         if [ -d "$dir"/CVS ]; then
             echo cvs

@@ -146,7 +146,7 @@ do_sup () {
     case "$vcs" in
         svn)
             echo "[Updating \`$file' with $vcs]"
-            ( setup; "$vcs" update "$file" )
+            ( setup; svn_upgrade "$file"; svn update "$file" )
             ;;
         cvs)
             echo "[Updating \`$file' with $vcs]"
@@ -228,6 +228,26 @@ vcs () {
     done
 
     return "$ret"
+}
+
+svn_upgrade () {
+    local dir="$1" output
+    if [ -f "$dir" ]; then
+        dir="$(dirname "$dir")"
+    fi
+    cd "$dir" || return 1
+    output="$(svn upgrade 2>&1)"
+    case "$output" in
+        '')
+            return
+            ;;
+        'svn: E155019:'*" root is '"*"'")
+            svn upgrade "$(expr "$output" : ".* root is '\\(.*\\)'.*")"
+            return
+            ;;
+        *)
+            return 1
+    esac
 }
 
 main "$@"

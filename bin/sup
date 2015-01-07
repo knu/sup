@@ -252,7 +252,7 @@ svn_upgrade () {
 
 git_remote_update () {
     if xargs -P1 </dev/null >/dev/null 2>&1; then
-        git remote | xargs -P5 -n1 git remote update
+        git remote | xargs -P5 -n1 git -c gc.auto=0 remote update
     else
         git remote update
     fi

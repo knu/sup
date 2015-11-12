@@ -146,7 +146,7 @@ do_sup () {
     case "$vcs" in
         svn)
             echo "[Updating \`$file' with $vcs]"
-            ( setup; svn_upgrade "$file"; svn update "$file" )
+            ( setup; svn_upgrade "$file"; svn_update "$file" )
             ;;
         cvs)
             echo "[Updating \`$file' with $vcs]"
@@ -235,19 +235,26 @@ svn_upgrade () {
     if [ -f "$dir" ]; then
         dir="$(dirname "$dir")"
     fi
-    cd "$dir" || return 1
-    output="$(svn upgrade 2>&1)"
-    case "$output" in
-        '')
-            return
-            ;;
-        'svn: E155019:'*" root is '"*"'")
-            svn upgrade "$(expr "$output" : ".* root is '\\(.*\\)'.*")"
-            return
-            ;;
-        *)
-            return 1
-    esac
+    (
+        cd "$dir" || exit 1
+        output="$(svn upgrade 2>&1)"
+        case "$output" in
+            '')
+                exit
+                ;;
+            'svn: E155019:'*" root is '"*"'")
+                svn upgrade "$(expr "$output" : ".* root is '\\(.*\\)'.*")"
+                exit
+                ;;
+            *)
+                exit 1
+        esac
+    )
+}
+
+svn_update () {
+    local file="$1"
+    ( cd "$(dirname "$file")" && svn up "$(basename "$file")" )
 }
 
 git_remote_update () {

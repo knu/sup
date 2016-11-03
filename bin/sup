@@ -258,7 +258,9 @@ svn_update () {
 }
 
 git_remote_update () {
-    if xargs -P1 </dev/null >/dev/null 2>&1; then
+    if { type hub && type ruby; } >/dev/null 2>&1; then
+        ruby -e 'rs=`git remote`.split;m,=%w[upstream github origin]&rs|rs;m&&fork{puts"Fetching "<<m;exec"hub -c gc.auto=0 sync"};(rs-[m]).each{|r|fork{exec *%w[git -c gc.auto=0 remote update -p]<<r}};exit Process.waitall.map{|p,s|s.exitstatus}.max||0'
+    elif xargs -P1 </dev/null >/dev/null 2>&1; then
         git remote | xargs -P5 -n1 git -c gc.auto=0 remote update --prune
     else
         git remote update --prune

@@ -259,9 +259,9 @@ svn_update () {
 
 git_remote_update () {
     if xargs -P1 </dev/null >/dev/null 2>&1; then
-        git remote | xargs -P5 -n1 git -c gc.auto=0 remote update
+        git remote | xargs -P5 -n1 git -c gc.auto=0 remote update --prune
     else
-        git remote update
+        git remote update --prune
     fi
 }
 

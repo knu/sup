@@ -6,6 +6,7 @@
 .Nd do <whatever SCM> update
 .Sh SYNOPSIS
 .Nm
+.Op Fl qr
 .Op Ar path ...
 .Sh DESCRIPTION
 .Nm
@@ -30,6 +31,31 @@ and Bazaar
 If called as
 .Sq Nm vcs ,
 the name of SCM detected is printed for each given path.
+.Sh OPTIONS
+The following command line arguments are supported:
+.Pp
+.Bl -tag -width "-q" -compact
+.It Fl q
+Suppress warnings like
+.Dq VCS unknown .
+.Pp
+.It Fl r
+Update directories recursively according to a file named
+.Pa .sup
+which should list the names of subdirectories to process.  Empty lines
+and lines starting with
+.Sq \#
+are ignored, lines starting with
+.Sq \-
+or
+.Sq \&!
+are regarded as negative patterns, and those starting with
+.Sq \+
+or otherwise, are regarded as positive patterns.  Surrounding space
+characters are trimmed, and shell wildcards are available.
+.Pp
+In recursion, symbolic links are ignored for security reasons.
+.El
 .Sh BUGS
 .Bl -dash -compact
 .It
@@ -46,7 +72,7 @@ in updating a Git working directory instead of
 and there is no way to configure that.
 .Pp
 .It
-There is no command line option, no configuration and no nothing.
+There is no configuration available as of yet.
 .El
 .Sh AUTHOR
 .An Akinori MUSHA Aq knu@iDaemons.org

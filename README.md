@@ -7,8 +7,8 @@
 ## SYNOPSIS
 
 ```
-sup [<path>...]
-vcs [<path>...]
+sup [-rq] [<path>...]
+vcs [-q] [<path>...]
 ```
 
 ## DESCRIPTION
@@ -23,6 +23,25 @@ each given path, or the current directory if none is given.
 If called as `vcs`, the name of SCM detected is printed for each given
 path.
 
+## OPTIONS
+The following command line arguments are supported:
+
+*   `-q`
+
+    Suppress warnings like "VCS unknown".
+
+*   `-r`
+
+    Update directories recursively according to a file named `.sup`
+    which should list the names of subdirectories to process.  Empty
+    lines and lines starting with `#` are ignored, lines starting with
+    `-` or `!` are regarded as negative patterns, and those starting
+    with `+` or otherwise, are regarded as positive patterns.
+    Surrounding space characters are trimmed, and shell wildcards are
+    available.
+
+    In recursion, symbolic links are ignored for security reasons.
+
 ## BUGS
 
 -   The name obviously collides with the legendary tool "SUP"
@@ -35,7 +54,7 @@ path.
 
 ## AUTHOR
 
-Copyright (c) 2008, 2009, 2012, 2013 Akinori MUSHA.
+Copyright (c) 2008-2017 Akinori MUSHA.
 
 Licensed under the 2-clause BSD license.  See `LICENSE.txt` for
 details.

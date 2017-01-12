@@ -277,16 +277,16 @@ subdirs_escaped () {
         exclude=
         while read -r pat; do
             case "$pat" in
-                [#]*)
+                ([#]*)
                     continue
                     ;;
-                [-\!]*)
+                ([-\!]*)
                     pat=${pat#?}
                     pat=$(expr "X$pat" : 'X[ 	]*\(.*\)[ 	]*$')
                     [ -n "$pat" ] || continue
                     exclude="${exclude:+"$exclude -o "}-name $(sh_escape "$pat")"
                     ;;
-                [+]*|*)
+                ([+]*|*)
                     pat=${pat#+}
                     pat=$(expr "X$pat" : 'X[ 	]*\(.*\)[ 	]*$')
                     [ -n "$pat" ] || continue

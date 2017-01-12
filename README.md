@@ -26,21 +26,20 @@ path.
 ## OPTIONS
 The following command line arguments are supported:
 
-*   `-q`
+### `-q`
 
-    Suppress warnings like "VCS unknown".
+Suppress warnings like "VCS unknown".
 
-*   `-r`
+### `-r`
 
-    Update directories recursively according to a file named `.sup`
-    which should list the names of subdirectories to process.  Empty
-    lines and lines starting with `#` are ignored, lines starting with
-    `-` or `!` are regarded as negative patterns, and those starting
-    with `+` or otherwise, are regarded as positive patterns.
-    Surrounding space characters are trimmed, and shell wildcards are
-    available.
+Update directories recursively according to a file named `.sup` which
+should list the names of subdirectories to process.  Empty lines and
+lines starting with `#` are ignored, lines starting with `-` or `!`
+are regarded as negative patterns, and those starting with `+` or
+otherwise, are regarded as positive patterns.  Surrounding space
+characters are trimmed, and shell wildcards are available.
 
-    In recursion, symbolic links are ignored for security reasons.
+In recursion, symbolic links are ignored for security reasons.
 
 ## BUGS
 

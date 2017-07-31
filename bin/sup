@@ -224,7 +224,8 @@ do_sup () {
                         local="$(git symbolic-ref HEAD 2>/dev/null)"
                         if [ -n "$local" ]; then
                             remote="$(git for-each-ref --format='%(upstream:short)' "$local" 2>/dev/null)"
-                            if [ -n "$remote" ]; then
+                            # If local has been fastforwarded to upstream by hub sync, skip rebasing.
+                            if [ -n "$remote" -a -n "$(git rev-list --max-count 1 "$local..$remote")" ]; then
                                 git rebase "$remote" || exit
                             fi
                         fi

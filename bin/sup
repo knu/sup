@@ -269,45 +269,50 @@ do_sup () {
 }
 
 subdirs_escaped () {
-    local dir=$1 expr subdir dir_escaped
+    local dir=$1 listfile excludelistfile tmpfile line exclude excluded
 
     [ -f "$dir/.sup" ] || return
 
-    expr=$(
-        include=
-        exclude=
-        while read -r pat; do
-            case "$pat" in
-                ([#]*)
-                    continue
-                    ;;
-                ([-\!]*)
-                    pat=${pat#?}
-                    pat=$(expr "X$pat" : 'X[ 	]*\(.*\)[ 	]*$')
-                    [ -n "$pat" ] || continue
-                    exclude="${exclude:+"$exclude -o "}-name $(sh_escape "$pat")"
-                    ;;
-                ([+]*|*)
-                    pat=${pat#+}
-                    pat=$(expr "X$pat" : 'X[ 	]*\(.*\)[ 	]*$')
-                    [ -n "$pat" ] || continue
-                    include="${include:+"$include -o "}-name $(sh_escape "$pat")"
-            esac
-        done < "$dir/.sup"
-        if [ -n "$include" ]; then
-            printf "%s" "'(' $include ')'"${exclude:+" '!' '(' $exclude ')'"}
-        fi
-    )
+    listfile="$(mktemp /tmp/sup.XXXXXX)"
 
-    [ -n "$expr" ] || return
+    while read -r pat; do
+        case "$pat" in
+            ([#]*)
+                continue
+                ;;
+            ([-\!]*)
+                pat=${pat#?}
+                excludelistfile="$(mktemp /tmp/sup.XXXXXX)"
+                tmpfile="$(mktemp /tmp/sup.XXXXXX)"
+                eval "printf '%s\n' \$dir/$pat" > "$excludelistfile"
+                while read -r line; do
+                    excluded=
+                    while read -r exclude; do
+                        case "$line" in
+                            "$exclude"|"$exclude"/*)
+                                excluded=t
+                                break
+                                ;;
+                        esac
+                    done < "$excludelistfile"
+                    [ -n "$excluded" ] || printf '%s\n' "$line"
+                done < "$listfile" > "$tmpfile"
+                mv "$tmpfile" "$listfile"
+                rm -f "$excludelistfile"
+                ;;
+            ([+]*|*)
+                eval "printf '%s\n' \$dir/$pat" >> "$listfile"
+        esac
+    done < "$dir/.sup"
 
-    dir_escaped=$(sh_escape "$dir")
-
-    eval "find \"\$dir_escaped\" '!' -path \"\$dir_escaped\" -prune '!' -type l -type d $expr" |
-        sort |
+    sort -u "$listfile" |
         while read -r subdir; do
-            printf ' %s' "$(sh_escape "$subdir")"
+            if [ -d "$subdir" -a ! -L "$subdir" ]; then
+                printf ' %s' "$(sh_escape "$subdir")"
+            fi
         done
+
+    rm -f "$listfile"
 }
 
 vcs () {

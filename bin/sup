@@ -124,6 +124,9 @@ vcs_of () {
                     echo git
                 fi
                 exit
+            elif [ -f .git ]; then
+                echo git
+                exit
             elif [ -d .hg ]; then
                 echo hg
                 exit

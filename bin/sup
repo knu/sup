@@ -155,7 +155,7 @@ vcs_of () {
         done
         )
 
-        if [ -d "$dir"/CVS ]; then
+        if [ -d CVS ]; then
             echo cvs
             exit
         fi

@@ -412,6 +412,10 @@ run_ruby () {
 }
 
 git_remote_update () {
+    if ! git symbolic-ref refs/remotes/origin/HEAD >/dev/null 2>&1; then
+        warn "This repository seems to be empty."
+        return 1
+    fi
     if { type hub && type ruby; } >/dev/null 2>&1; then
         run_ruby -e 'rs=`git remote`.split;m,=%w[upstream github origin]&rs|rs;m&&fork{puts"Fetching "<<m;exec"hub -c gc.auto=0 sync"};(rs-[m]).each{|r|fork{exec *%w[git -c gc.auto=0 remote update -p]<<r}};exit Process.waitall.map{|p,s|s.exitstatus}.max||0'
     elif xargs -P1 </dev/null >/dev/null 2>&1; then

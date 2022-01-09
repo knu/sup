@@ -6,7 +6,7 @@
 .Nd do <whatever SCM> update
 .Sh SYNOPSIS
 .Nm
-.Op Fl qr
+.Op Fl eqr
 .Op Ar path ...
 .Sh DESCRIPTION
 .Nm
@@ -33,6 +33,10 @@ If called as
 the name of SCM detected is printed for each given path.
 .Sh OPTIONS
 The following command line arguments are supported:
+.Pp
+.Bl -tag -width "-e" -compact
+.It Fl e
+Show errors only, suppressing output of successful updates.
 .Pp
 .Bl -tag -width "-q" -compact
 .It Fl q

@@ -2,7 +2,7 @@
 #
 # sup(1) - do <whatever SCM> update
 #
-# Copyright (c) 2008-2017 Akinori MUSHA
+# Copyright (c) 2008-2022 Akinori MUSHA
 #
 # All rights reserved.
 #
@@ -28,8 +28,14 @@
 # SUCH DAMAGE.
 
 main () {
-    while getopts qr opt; do
+    local opt ret=0
+
+    while getopts eqr opt; do
         case "$opt" in
+            e)
+                # show error only
+                OPT_e=t
+                ;;
             q)
                 OPT_q=t
                 ;;
@@ -46,7 +52,11 @@ main () {
 
     case "$(basename "$0")" in
         sup)
-            sup "${@:-.}"
+            unset MYTMPDIR
+            setup
+            sup "${@:-.}" || ret="$?"
+            teardown
+            return "$ret"
             ;;
         *)
             vcs "${@:-.}"
@@ -56,7 +66,7 @@ main () {
 
 warn () {
     [ -n "$OPT_q" ] ||
-        echo "$0: $@" >&2
+        echo "$0: $*" >&2
 }
 
 sh_escape () {
@@ -155,10 +165,19 @@ vcs_of () {
 }
 
 setup () {
-    trap 'exit 129' 1
-    trap 'exit 130' 2
-    trap 'exit 131' 3
-    trap 'exit 143' 15
+    if [ -n "$MYTMPDIR" ]; then
+        MYTMPDIR=$(mktemp -d "${MYTMPDIR}/XXXXXX")
+    else
+        MYTMPDIR=$(mktemp -d "${TMPDIR-/tmp}/${0##*/}.XXXXXX")
+    fi
+    trap 'teardown; exit 129' 1
+    trap 'teardown; exit 130' 2
+    trap 'teardown; exit 131' 3
+    trap 'teardown; exit 143' 15
+}
+
+teardown () {
+    rm -rf "$MYTMPDIR"
 }
 
 handle_status () {
@@ -179,7 +198,7 @@ sup () {
     local file ret=0 dir
 
     for file; do
-        do_sup "$(vcs_of "$file")" "$file" || ret="$?"
+        sup_1 "$(vcs_of "$file")" "$file" || ret="$?"
         handle_status $ret
         if [ -n "$OPT_r" -a -f "$file/.sup" ]; then
             eval "sup $(subdirs_escaped "$file")" || ret="$?"
@@ -190,12 +209,24 @@ sup () {
     return $ret
 }
 
+sup_1 () {
+    if [ -n "$OPT_e" ]; then
+        local ret=0 logfile="$(mktemp "$MYTMPDIR"/log.XXXXXX)"
+        do_sup "$@" >"$logfile" 2>&1 || ret="$?"
+        [ "$ret" -eq 0 ] || cat "$logfile"
+        return "$ret"
+    else
+        do_sup "$@"
+    fi
+}
+
 do_sup () {
     local vcs="$1" file="$2"
     local dir="$(dir_of "$file")"
     local ret=0
 
     if [ -z "$vcs" ]; then
+        [ -z "$OPT_e" ] || return 0
         warn "VCS unknown: $file"
         return 1
     fi
@@ -266,6 +297,7 @@ do_sup () {
             fi
             ;;
         *)
+            [ -z "$OPT_e" ] || return 0
             warn "Skipping \`$file'"
             ;;
     esac
@@ -276,7 +308,7 @@ subdirs_escaped () {
 
     [ -f "$dir/.sup" ] || return
 
-    listfile="$(mktemp /tmp/sup.XXXXXX)"
+    listfile="$(mktemp "$MYTMPDIR"/list.XXXXXX)"
 
     while read -r pat; do
         case "$pat" in
@@ -285,8 +317,8 @@ subdirs_escaped () {
                 ;;
             ([-\!]*)
                 pat=${pat#?}
-                excludelistfile="$(mktemp /tmp/sup.XXXXXX)"
-                tmpfile="$(mktemp /tmp/sup.XXXXXX)"
+                excludelistfile="$(mktemp "$MYTMPDIR"/excludelist.XXXXXX)"
+                tmpfile="$(mktemp "$MYTMPDIR"/tmp.XXXXXX)"
                 eval "printf '%s\n' \$dir/$pat" > "$excludelistfile"
                 while read -r line; do
                     excluded=

@@ -212,7 +212,7 @@ sup () {
 sup_1 () {
     if [ -n "$OPT_e" ]; then
         local ret=0 logfile="$(mktemp "$MYTMPDIR"/log.XXXXXX)"
-        do_sup "$@" >"$logfile" 2>&1 || ret="$?"
+        do_sup "$@" </dev/null >"$logfile" 2>&1 || ret="$?"
         [ "$ret" -eq 0 ] || cat "$logfile"
         return "$ret"
     else

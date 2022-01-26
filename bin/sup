@@ -412,7 +412,9 @@ run_ruby () {
 }
 
 git_remote_update () {
-    if ! git symbolic-ref refs/remotes/origin/HEAD >/dev/null 2>&1; then
+    if ! git symbolic-ref refs/remotes/origin/HEAD >/dev/null 2>&1 &&
+           ! git remote show origin | grep -q '^  HEAD branch: [^ (]'
+    then
         warn "This repository seems to be empty."
         return 1
     fi

@@ -264,6 +264,9 @@ do_sup () {
                             fi
                         fi
                     fi
+                    if type git-delete-merged >/dev/null 2>&1; then
+                        git-delete-merged
+                    fi
                     if [ "$vcs" = git-svn ]; then
                         git svn rebase -l
                     fi

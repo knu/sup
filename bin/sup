@@ -56,7 +56,7 @@ main () {
             setup
             sup "${@:-.}" || ret="$?"
             teardown
-            return "$ret"
+            return $ret
             ;;
         *)
             vcs "${@:-.}"
@@ -190,7 +190,7 @@ handle_status () {
             kill -$((ret - 128)) $$
             sleep 3
         fi
-        exit "$ret"
+        exit $ret
     fi
 }
 
@@ -214,7 +214,7 @@ sup_1 () {
         local ret=0 logfile="$(mktemp "$MYTMPDIR"/log.XXXXXX)"
         do_sup "$@" </dev/null >"$logfile" 2>&1 || ret="$?"
         [ "$ret" -eq 0 ] || cat "$logfile"
-        return "$ret"
+        return $ret
     else
         do_sup "$@"
     fi
@@ -226,9 +226,12 @@ do_sup () {
     local ret=0
 
     if [ -z "$vcs" ]; then
-        [ -z "$OPT_e" ] || return 0
-        warn "VCS unknown: $file"
-        return 1
+        if [ -n "$OPT_e" ]; then
+            return 0
+        else
+            warn "VCS unknown: $file"
+            return 1
+        fi
     fi
 
     case "$vcs" in
@@ -263,6 +266,8 @@ do_sup () {
                                 git rebase "$remote" || exit
                             fi
                         fi
+                    else
+                        ret=$?
                     fi
                     if type git-delete-merged >/dev/null 2>&1; then
                         git-delete-merged
@@ -271,6 +276,7 @@ do_sup () {
                         git svn rebase -l
                     fi
                     git submodule update --init --recursive
+                    exit $ret
                 } )
             ;;
         git-bare)
@@ -367,7 +373,7 @@ vcs () {
         echo "$vcs"
     done
 
-    return "$ret"
+    return $ret
 }
 
 svn_upgrade () {

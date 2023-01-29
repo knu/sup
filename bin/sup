@@ -268,6 +268,9 @@ do_sup () {
                         fi
                     else
                         ret=$?
+                        if [ "$ret" -eq 127 ]; then
+                            exit 0
+                        fi
                     fi
                     if type git-delete-merged >/dev/null 2>&1; then
                         git-delete-merged
@@ -425,7 +428,7 @@ git_remote_update () {
            ! git remote show origin | grep -q '^  HEAD branch: [^ (]'
     then
         warn "This repository seems to be empty."
-        return 1
+        return 127
     fi
     if { type hub && type ruby; } >/dev/null 2>&1; then
         run_ruby -e 'rs=`git remote`.split;m,=%w[upstream github origin]&rs|rs;m&&fork{puts"Fetching "<<m;exec"hub -c gc.auto=0 sync"};(rs-[m]).each{|r|fork{exec *%w[git -c gc.auto=0 remote update -p]<<r}};exit Process.waitall.map{|p,s|s.exitstatus}.max||0'

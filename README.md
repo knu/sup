@@ -20,6 +20,12 @@ each given path, or the current directory if none is given.
 `sup` currently supports CVS (`cvs`), Subversion (`svn`), Git
 (`git`/`git-svn`), Mercurial (`hg`) and Bazaar (`bzr`).
 
+Git-only features:
+
+- Calls `hub sync` if hub(1) if available
+- Updates remotes in parallel
+- Follows the `master` to `main` switch in remotes
+
 If called as `vcs`, the name of SCM detected is printed for each given
 path.
 

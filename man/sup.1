@@ -28,6 +28,25 @@ Mercurial
 and Bazaar
 .Pq Sq Nm bzr .
 .Pp
+Git-only features:
+.Pp
+.Bl -dash -offset indent -compact
+.It
+Calls
+.Dq Li "hub sync"
+if
+.Xr hub 1
+if available
+.It
+Updates remotes in parallel
+.It
+Follows the
+.Dq master
+to
+.Dq main
+switch in remotes
+.El
+.Pp
 If called as
 .Sq Nm vcs ,
 the name of SCM detected is printed for each given path.

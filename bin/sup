@@ -433,7 +433,7 @@ run_ruby () {
         fi
     done
 
-    ruby="$(cd && { asdf which ruby || rbenv which ruby; } 2>/dev/null)"
+    ruby="$(cd && { rtx which ruby || asdf which ruby || rbenv which ruby; } 2>/dev/null)"
     if [ -x "$ruby" ]; then
         "$ruby" "$@"
     else

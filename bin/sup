@@ -2,7 +2,7 @@
 #
 # sup(1) - do <whatever SCM> update
 #
-# Copyright (c) 2008-2023 Akinori MUSHA
+# Copyright (c) 2008-2024 Akinori MUSHA
 #
 # All rights reserved.
 #
@@ -433,7 +433,7 @@ run_ruby () {
         fi
     done
 
-    ruby="$(cd && { rtx which ruby || asdf which ruby || rbenv which ruby; } 2>/dev/null)"
+    ruby="$(cd && { mise which ruby || rtx which ruby || asdf which ruby || rbenv which ruby; } 2>/dev/null)"
     if [ -x "$ruby" ]; then
         "$ruby" "$@"
     else

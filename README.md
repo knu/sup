@@ -22,7 +22,7 @@ each given path, or the current directory if none is given.
 
 Git-only features:
 
-- Calls `hub sync` if hub(1) if available
+- Calls [`git-sync`](https://github.com/jacobwgillespie/git-sync) or [`hub sync`](https://github.com/mislav/hub) if they are available
 - Updates remotes in parallel
 - Follows the `master` to `main` switch in remotes
 
@@ -63,7 +63,7 @@ In recursion, symbolic links are ignored for security reasons.
 
 ## AUTHOR
 
-Copyright (c) 2008-2023 Akinori MUSHA.
+Copyright (c) 2008-2024 Akinori MUSHA.
 
 Licensed under the 2-clause BSD license.  See `LICENSE.txt` for
 details.

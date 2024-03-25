@@ -441,15 +441,26 @@ run_ruby () {
     fi
 }
 
+syncer () {
+    if type git-sync >/dev/null 2>&1; then
+        echo git
+    elif type hub >/dev/null 2>&1; then
+        echo hub
+    else
+        false
+    fi
+}
+
 git_remote_update () {
+    local syncer
     if ! git symbolic-ref refs/remotes/origin/HEAD >/dev/null 2>&1 &&
            ! git remote show origin | grep -q '^  HEAD branch: [^ (]'
     then
         warn "This repository seems to be empty."
         return 127
     fi
-    if { type hub && type ruby; } >/dev/null 2>&1; then
-        run_ruby -e 'rs=`git remote`.split;m,=%w[upstream github origin]&rs|rs;m&&fork{puts"Fetching "<<m;exec"hub -c gc.auto=0 sync"};(rs-[m]).each{|r|fork{exec *%w[git -c gc.auto=0 remote update -p]<<r}};exit Process.waitall.map{|p,s|s.exitstatus}.max||0'
+    if { type ruby && syncer="$(syncer)"; } >/dev/null 2>&1; then
+        run_ruby -e 'rs=`git remote`.split;m,=%w[upstream github origin]&rs|rs;m&&fork{puts"Fetching "<<m;exec"'"$syncer"' -c gc.auto=0 sync"};(rs-[m]).each{|r|fork{exec *%w[git -c gc.auto=0 remote update -p]<<r}};exit Process.waitall.map{|p,s|s.exitstatus}.max||0'
     elif xargs -P1 </dev/null >/dev/null 2>&1; then
         git remote | xargs -P5 -n1 git -c gc.auto=0 remote update --prune
     else

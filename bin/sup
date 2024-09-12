@@ -170,10 +170,7 @@ setup () {
     else
         MYTMPDIR=$(mktemp -d "${TMPDIR-/tmp}/${0##*/}.XXXXXX")
     fi
-    trap 'teardown; exit 129' 1
-    trap 'teardown; exit 130' 2
-    trap 'teardown; exit 131' 3
-    trap 'teardown; exit 143' 15
+    trap 'teardown' 0 1 2 3 15
 }
 
 teardown () {

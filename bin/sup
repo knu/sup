@@ -256,6 +256,11 @@ do_sup () {
                     fi
                     if git_remote_update; then
                         local="$(git symbolic-ref HEAD 2>/dev/null)"
+                        if [ "$local" = refs/heads/master ] && git merge-base --is-ancestor "$local" origin/main 2>/dev/null; then
+                            warn "Switching from master to main"
+                            git checkout main
+                            local="$(git symbolic-ref HEAD 2>/dev/null)"
+                        fi
                         if [ -n "$local" ]; then
                             remote="$(git for-each-ref --format='%(upstream:short)' "$local" 2>/dev/null)"
                             # If local has been fastforwarded to upstream by hub sync, skip rebasing.
@@ -265,26 +270,8 @@ do_sup () {
                         fi
                     else
                         ret=$?
-                        if [ "$ret" -eq 0 ]; then
-                            :
-                        elif [ "$ret" -eq 127 ]; then
+                        if [ "$ret" -eq 127 ]; then
                             exit 0
-                        else
-                            handle_status "$ret"
-
-                            git branch | cut -c3- | while read local; do
-                                remote="$(git_tracking_remote "$local")" || continue
-                                branch="$(git_tracking_branch "$local")" || continue
-                                if [ "$branch" = master ] && git_remote_branch_exists "$remote/main" &&
-                                       ! git_remote_branch_exists "$remote/$branch"; then
-                                    warn "Updating the tracking branch of $local from $remote/master to $remote/main"
-                                    git config "branch.$local.merge" main
-                                    if [ "$local" = master ]; then
-                                        warn "Renaming $local to main"
-                                        git branch -m "$local" main
-                                    fi
-                                fi
-                            done
                         fi
                     fi
                     if type git-delete-merged >/dev/null 2>&1; then
@@ -463,27 +450,6 @@ git_remote_update () {
     else
         git remote update --prune
     fi
-}
-
-git_local_branch_exists () {
-    git show-ref --verify --quiet refs/heads/"$1"
-}
-
-git_remote_branch_exists () {
-    git show-ref --verify --quiet refs/remotes/"$1"
-}
-
-git_current_branch () {
-    git branch --show-current
-}
-
-git_tracking_remote () {
-    git config "branch.${1:-$(git_current_branch)}.remote"
-}
-
-git_tracking_branch () {
-    local ref="$(git config "branch.${1:-$(git_current_branch)}.merge")" || return
-    printf '%s\n' "${ref#refs/heads/}"
 }
 
 main "$@"

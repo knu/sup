@@ -274,7 +274,7 @@ do_sup () {
                             exit 0
                         fi
                     fi
-                    if type git-delete-merged >/dev/null 2>&1; then
+                    if command -v git-delete-merged >/dev/null; then
                         git-delete-merged
                     fi
                     if [ "$vcs" = git-svn ]; then
@@ -426,9 +426,9 @@ run_ruby () {
 }
 
 syncer () {
-    if type git-sync >/dev/null 2>&1; then
+    if command -v git-sync >/dev/null; then
         echo git
-    elif type hub >/dev/null 2>&1; then
+    elif command -v hub >/dev/null; then
         echo hub
     else
         false
@@ -443,7 +443,7 @@ git_remote_update () {
         warn "This repository seems to be empty."
         return 127
     fi
-    if { type ruby && syncer="$(syncer)"; } >/dev/null 2>&1; then
+    if { command -v ruby && syncer="$(syncer)"; } >/dev/null; then
         run_ruby -e 'rs=`git remote`.split;m,=%w[upstream github origin]&rs|rs;m&&fork{puts"Fetching "<<m;exec"'"$syncer"' -c gc.auto=0 sync"};(rs-[m]).each{|r|fork{exec *%w[git -c gc.auto=0 remote update -p]<<r}};exit Process.waitall.map{|p,s|s.exitstatus}.max||0'
     elif xargs -P1 </dev/null >/dev/null 2>&1; then
         git remote | xargs -P5 -n1 git -c gc.auto=0 remote update --prune

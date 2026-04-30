@@ -55,6 +55,7 @@ main () {
             unset MYTMPDIR
             setup
             sup "${@:-.}" || ret="$?"
+            run_maintenance
             teardown
             return $ret
             ;;
@@ -254,6 +255,7 @@ do_sup () {
             else
                 echo "[Updating \`$file' with git + $vcs]"
             fi
+            record_maintenance_target "$dir"
             ( setup; cd "$dir" && {
                     if [ "$vcs" = git-svn ]; then
                         git svn fetch || exit
@@ -290,7 +292,8 @@ do_sup () {
             ;;
         git-bare)
             echo "[Updating \`$file' with $vcs]"
-            ( setup; GIT_DIR="$dir" git fetch )
+            record_maintenance_target "$dir"
+            ( setup; GIT_DIR="$dir" git -c gc.auto=0 -c maintenance.auto=false fetch )
             ;;
         hg)
             echo "[Updating \`$file' with $vcs]"
@@ -448,12 +451,28 @@ git_remote_update () {
         return 127
     fi
     if { command -v ruby && syncer="$(syncer)"; } >/dev/null; then
-        run_ruby -e 'rs=`git remote`.split;m,=%w[upstream github origin]&rs|rs;m&&fork{puts"Fetching "<<m;exec"'"$syncer"' -c gc.auto=0 sync"};(rs-[m]).each{|r|fork{exec *%w[git -c gc.auto=0 remote update -p]<<r}};exit Process.waitall.map{|p,s|s.exitstatus}.max||0'
+        run_ruby -e 'rs=`git remote`.split;m,=%w[upstream github origin]&rs|rs;m&&fork{puts"Fetching "<<m;exec"'"$syncer"' -c gc.auto=0 -c maintenance.auto=false sync"};(rs-[m]).each{|r|fork{exec *%w[git -c gc.auto=0 -c maintenance.auto=false remote update -p]<<r}};exit Process.waitall.map{|p,s|s.exitstatus}.max||0'
     elif xargs -P1 </dev/null >/dev/null 2>&1; then
-        git remote | xargs -P5 -n1 git -c gc.auto=0 remote update --prune
+        git remote | xargs -P5 -n1 git -c gc.auto=0 -c maintenance.auto=false remote update --prune
     else
-        git remote update --prune
+        git -c gc.auto=0 -c maintenance.auto=false remote update --prune
     fi
+}
+
+record_maintenance_target () {
+    printf '%s\n' "$1" >> "$MYTMPDIR/maint.list"
+}
+
+run_maintenance () {
+    local listfile="$MYTMPDIR/maint.list" dir quiet=
+
+    [ -f "$listfile" ] || return 0
+
+    [ -z "$OPT_q$OPT_e" ] || quiet=--quiet
+
+    sort -u "$listfile" | while IFS= read -r dir; do
+        git -C "$dir" maintenance run --auto $quiet </dev/null || :
+    done
 }
 
 main "$@"

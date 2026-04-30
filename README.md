@@ -63,7 +63,7 @@ In recursion, symbolic links are ignored for security reasons.
 
 ## AUTHOR
 
-Copyright (c) 2008-2024 Akinori MUSHA.
+Copyright (c) 2008-2026 Akinori MUSHA.
 
 Licensed under the 2-clause BSD license.  See `LICENSE.txt` for
 details.

@@ -24,7 +24,7 @@ Git-only features:
 
 - Calls [`git-sync`](https://github.com/jacobwgillespie/git-sync) or [`hub sync`](https://github.com/mislav/hub) if they are available
 - Updates remotes in parallel
-- Follows the `master` to `main` switch in remotes
+- Follows renamed remote default branches, such as `master` to `main`
 
 If called as `vcs`, the name of SCM detected is printed for each given
 path.

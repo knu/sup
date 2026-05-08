@@ -260,25 +260,74 @@ do_sup () {
                     if [ "$vcs" = git-svn ]; then
                         git svn fetch || exit
                     fi
-                    if git_remote_update; then
-                        local="$(git symbolic-ref HEAD 2>/dev/null)"
-                        if [ "$local" = refs/heads/master ] && git merge-base --is-ancestor "$local" origin/main 2>/dev/null; then
-                            warn "Switching from master to main"
-                            git checkout main
-                            local="$(git symbolic-ref HEAD 2>/dev/null)"
-                        fi
-                        if [ -n "$local" ]; then
-                            remote="$(git for-each-ref --format='%(upstream:short)' "$local" 2>/dev/null)"
-                            # If local has been fastforwarded to upstream by hub sync, skip rebasing.
-                            if [ -n "$remote" -a -n "$(git rev-list --max-count 1 "$local..$remote")" ]; then
-                                git rebase "$remote" || exit
-                            fi
-                        fi
+                    old_default_remote="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null)"
+                    update_log="$(mktemp "$MYTMPDIR"/git-update.XXXXXX)"
+                    update_failed=
+                    if git_remote_update 2>"$update_log"; then
+                        :
                     else
                         ret=$?
+                        update_failed=t
                         if [ "$ret" -eq 127 ]; then
+                            cat "$update_log" >&2
                             exit 0
                         fi
+                    fi
+                    local="$(git symbolic-ref HEAD 2>/dev/null)"
+                    if [ -n "$local" ]; then
+                        remote="$(git for-each-ref --format='%(upstream:short)' "$local" 2>/dev/null)"
+                        git remote set-head origin --auto >/dev/null 2>&1 || :
+                        default_remote="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null)"
+                        # Recover from an already-pruned default branch when the old origin/HEAD is dangling.
+                        if [ "$default_remote" = "$old_default_remote" ] &&
+                               [ "$remote" = "$old_default_remote" ] &&
+                               ! git rev-parse --verify -q "$old_default_remote^{commit}" >/dev/null
+                        then
+                            default_remote=
+                            for candidate in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin); do
+                                if [ "$candidate" != origin/HEAD ] &&
+                                       git merge-base --is-ancestor "$local" "$candidate" 2>/dev/null
+                                then
+                                    if [ -n "$default_remote" ]; then
+                                        default_remote=
+                                        break
+                                    fi
+                                    default_remote="$candidate"
+                                fi
+                            done
+                        fi
+                        # Follow the renamed remote default branch when the current branch tracked the old one.
+                        if [ -n "$old_default_remote" ] &&
+                               [ -n "$default_remote" ] &&
+                               [ "$old_default_remote" != "$default_remote" ] &&
+                               [ "$remote" = "$old_default_remote" ] &&
+                               git rev-parse --verify -q "$default_remote^{commit}" >/dev/null &&
+                               git merge-base --is-ancestor "$local" "$default_remote" 2>/dev/null
+                        then
+                            default_local="${default_remote#origin/}"
+                            warn "Switching from ${local#refs/heads/} to $default_local"
+                            git remote set-head origin "$default_local" >/dev/null 2>&1 || :
+                            git checkout "$default_local" || exit
+                            local="$(git symbolic-ref HEAD 2>/dev/null)"
+                            ret=0
+                        fi
+                        remote="$(git for-each-ref --format='%(upstream:short)' "$local" 2>/dev/null)"
+                        # If local has been fastforwarded to upstream by hub sync, skip rebasing.
+                        if [ -n "$remote" ]; then
+                            if git rev-parse --verify -q "$remote^{commit}" >/dev/null; then
+                                if [ "$ret" -eq 0 ] && [ -n "$(git rev-list --max-count 1 "$local..$remote")" ]; then
+                                    git rebase "$remote" || exit
+                                fi
+                            else
+                                warn "Upstream branch is gone: $remote"
+                                warn "Unset it with: git branch --unset-upstream"
+                                warn "Or set a new one with: git branch --set-upstream-to=<upstream>"
+                                ret=1
+                            fi
+                        fi
+                    fi
+                    if [ -z "$update_failed" ] || [ "$ret" -ne 0 ]; then
+                        cat "$update_log" >&2
                     fi
                     if command -v git-delete-merged >/dev/null; then
                         git-delete-merged

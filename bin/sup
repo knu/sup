@@ -28,32 +28,48 @@
 # SUCH DAMAGE.
 
 main () {
-    local opt ret=0
+    local ret=0
+    local parsed
 
-    while getopts eqr opt; do
-        case "$opt" in
-            e)
+    parsed="$(parse_options "$@")" || exit 64
+    eval "$parsed"
+
+    while :; do
+        case "$1" in
+            --)
+                shift
+                break
+                ;;
+            --report)
+                shift
+                if [ -z "$1" ]; then
+                    echo "$0: option requires an argument -- report" >&2
+                    exit 64
+                fi
+                OPT_report=$1
+                ;;
+            -e)
                 # show error only
                 OPT_e=t
                 ;;
-            q)
+            -q)
                 OPT_q=t
                 ;;
-            r)
+            -r)
                 OPT_r=t
                 ;;
             *)
-                echo "$0: illegal option -- $OPTARG" >&2
-                exit 64
+                break
+                ;;
         esac
+        shift
     done
-
-    shift $((OPTIND - 1))
 
     case "$(basename "$0")" in
         sup)
             unset MYTMPDIR
             setup
+            setup_report
             sup "${@:-.}" || ret="$?"
             run_maintenance
             teardown
@@ -63,6 +79,18 @@ main () {
             vcs "${@:-.}"
             ;;
     esac
+}
+
+parse_options () {
+    git rev-parse --parseopt --stop-at-non-option -- "$@" <<EOF
+sup [options] [<path>...]
+
+--
+e     show errors only
+q     suppress warnings
+r     update recursively
+report=!file write update results
+EOF
 }
 
 warn () {
@@ -212,14 +240,19 @@ sup () {
 }
 
 sup_1 () {
+    local vcs="$1" file="$2" ret=0
+
     if [ -n "$OPT_e" ]; then
-        local ret=0 logfile="$(mktemp "$MYTMPDIR"/log.XXXXXX)"
+        local logfile="$(mktemp "$MYTMPDIR"/log.XXXXXX)"
         do_sup "$@" </dev/null >"$logfile" 2>&1 || ret="$?"
         [ "$ret" -eq 0 ] || cat "$logfile"
-        return $ret
     else
-        do_sup "$@"
+        do_sup "$@" || ret="$?"
     fi
+
+    report_status "$file" "$vcs" "$ret"
+
+    return $ret
 }
 
 do_sup () {
@@ -522,6 +555,20 @@ run_maintenance () {
     sort -u "$listfile" | while IFS= read -r dir; do
         git -C "$dir" maintenance run --auto $quiet </dev/null || :
     done
+}
+
+setup_report () {
+    [ -n "$OPT_report" ] || return 0
+
+    : > "$OPT_report" || exit $?
+}
+
+report_status () {
+    local file="$1" vcs="$2" ret="$3"
+
+    [ -n "$OPT_report" ] || return 0
+
+    printf '%s\t%s\t%s\n' "$(dir_of "$file")" "$vcs" "$ret" >> "$OPT_report" || exit $?
 }
 
 main "$@"

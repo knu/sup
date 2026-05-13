@@ -7,7 +7,7 @@
 ## SYNOPSIS
 
 ```
-sup [-erq] [<path>...]
+sup [-erq] [--report=<file>] [<path>...]
 vcs [-q] [<path>...]
 ```
 
@@ -50,6 +50,11 @@ otherwise, are regarded as positive patterns.  Surrounding space
 characters are trimmed, and shell wildcards are available.
 
 In recursion, symbolic links are ignored for security reasons.
+
+### `--report=<file>`
+
+Write update results to `<file>`.  Each line contains
+`DIR<TAB>VCS<TAB>EXITCODE<LF>`.
 
 ## BUGS
 

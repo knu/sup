@@ -166,19 +166,19 @@ vcs_of () {
                 else
                     echo git
                 fi
-                exit
+                exit 0
             elif [ -f .git ]; then
                 echo git
-                exit
+                exit 0
             elif [ -d .hg ]; then
                 echo hg
-                exit
+                exit 0
             elif [ -d .bzr ]; then
                 echo bzr
-                exit
+                exit 0
             elif [ -d .svn ]; then
                 echo svn
-                exit
+                exit 0
             fi
 
             if [ "$(pwd)" = / ]; then
@@ -186,7 +186,8 @@ vcs_of () {
             fi
             cd -P ..
         done
-        )
+        exit 1
+        ) && exit
 
         if [ -d CVS ]; then
             echo cvs

@@ -72,7 +72,6 @@ main () {
             setup_report
             sup "${@:-.}" || ret="$?"
             run_maintenance
-            teardown
             return $ret
             ;;
         *)
@@ -199,12 +198,17 @@ vcs_of () {
 }
 
 setup () {
+    local sig
+
     if [ -n "$MYTMPDIR" ]; then
-        MYTMPDIR=$(mktemp -d "${MYTMPDIR}/XXXXXX")
+        MYTMPDIR=$(mktemp -d "${MYTMPDIR}/XXXXXX") || exit 125
     else
-        MYTMPDIR=$(mktemp -d "${TMPDIR-/tmp}/${0##*/}.XXXXXX")
+        MYTMPDIR=$(mktemp -d "${TMPDIR-/tmp}/${0##*/}.XXXXXX") || exit 125
     fi
-    trap 'teardown' 0 1 2 3 15
+    for sig in 0 1 2 3 15; do
+        trap 'ret=$?; trap "" 1 2 3 15; trap - 0
+            teardown; exit $(( '"$sig"' ? 128 + '"$sig"' : ret ))' "$sig"
+    done
 }
 
 teardown () {
@@ -216,6 +220,9 @@ handle_status () {
 
     [ -n "$ret" ] || return
 
+    # Reserve 125 for fatal errors, including those from subshells.
+    [ "$ret" -ne 125 ] || exit "$ret"
+
     if [ $ret -gt 128 ]; then
         if [ $ret -le 165 ]; then
             kill -$((ret - 128)) $$
@@ -226,13 +233,14 @@ handle_status () {
 }
 
 sup () {
-    local file ret=0 dir
+    local file ret=0 dir subdirs
 
     for file; do
         sup_1 "$(vcs_of "$file")" "$file" || ret="$?"
         handle_status $ret
         if [ -n "$OPT_r" -a -f "$file/.sup" ]; then
-            eval "sup $(subdirs_escaped "$file")" || ret="$?"
+            subdirs=$(subdirs_escaped "$file") || exit 125
+            eval "sup $subdirs" || ret="$?"
             handle_status $ret
         fi
     done
@@ -244,7 +252,8 @@ sup_1 () {
     local vcs="$1" file="$2" ret=0
 
     if [ -n "$OPT_e" ]; then
-        local logfile="$(mktemp "$MYTMPDIR"/log.XXXXXX)"
+        local logfile
+        logfile=$(mktemp "$MYTMPDIR"/log.XXXXXX) || exit 125
         do_sup "$@" </dev/null >"$logfile" 2>&1 || ret="$?"
         [ "$ret" -eq 0 ] || cat "$logfile"
     else
@@ -295,7 +304,7 @@ do_sup () {
                         git svn fetch || exit
                     fi
                     old_default_remote="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null)"
-                    update_log="$(mktemp "$MYTMPDIR"/git-update.XXXXXX)"
+                    update_log="$(mktemp "$MYTMPDIR"/git-update.XXXXXX)" || exit 125
                     update_failed=
                     if git_remote_update 2>"$update_log"; then
                         :
@@ -412,7 +421,7 @@ subdirs_escaped () {
 
     [ -f "$dir/.sup" ] || return
 
-    listfile="$(mktemp "$MYTMPDIR"/list.XXXXXX)"
+    listfile="$(mktemp "$MYTMPDIR"/list.XXXXXX)" || exit 125
 
     while read -r pat; do
         case "$pat" in
@@ -421,8 +430,8 @@ subdirs_escaped () {
                 ;;
             ([-\!]*)
                 pat=${pat#?}
-                excludelistfile="$(mktemp "$MYTMPDIR"/excludelist.XXXXXX)"
-                tmpfile="$(mktemp "$MYTMPDIR"/tmp.XXXXXX)"
+                excludelistfile="$(mktemp "$MYTMPDIR"/excludelist.XXXXXX)" || exit 125
+                tmpfile="$(mktemp "$MYTMPDIR"/tmp.XXXXXX)" || exit 125
                 eval "printf '%s\n' \$dir/$pat" > "$excludelistfile"
                 while read -r line; do
                     excluded=

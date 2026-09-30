@@ -29,6 +29,17 @@ Git-only features:
 If called as `vcs`, the name of SCM detected is printed for each given
 path.
 
+## INSTALLATION
+
+Install with [mise](https://mise.jdx.dev/):
+
+```sh
+mise use -g github:knu/sup@latest
+```
+
+This provides both `sup` and `vcs`.  Git and the commands for the SCMs you
+use must be available on your `PATH`.
+
 ## OPTIONS
 The following command line arguments are supported:
 
